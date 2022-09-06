@@ -17,7 +17,18 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-function generateRandomString() {}
+function generateRandomString() {
+
+  const charAndNum = ['ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'];
+
+  let newID = '';
+  
+  for (let i = 0; i < 6; i++) {
+    newID += charAndNum[0][Math.floor(Math.random() * charAndNum[0].length)];
+  }
+
+  return newID;
+}
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
@@ -26,7 +37,9 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  
+
+  res.send("Ok"); // Respond with 'Ok' 
 });
 
 app.get("/urls/new", (req, res) => {
