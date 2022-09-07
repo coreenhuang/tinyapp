@@ -37,10 +37,11 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
 
+  let newID = generateRandomString();
   // adds to database, generating random id for key, and adds the client's long URL input as the value
-  urlDatabase[generateRandomString()] = req.body.longURL;
+  urlDatabase[newID] = req.body.longURL;
 
-  res.send("Ok"); // Respond with 'Ok' 
+  res.redirect(`/urls/${newID}`);
 });
 
 app.get("/urls/new", (req, res) => {
