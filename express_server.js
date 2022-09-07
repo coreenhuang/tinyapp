@@ -22,7 +22,7 @@ function generateRandomString() {
   const charAndNum = ['ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'];
 
   let newID = '';
-  
+
   for (let i = 0; i < 6; i++) {
     newID += charAndNum[0][Math.floor(Math.random() * charAndNum[0].length)];
   }
@@ -36,8 +36,9 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  
+
+  // adds to database, generating random id for key, and adds the client's long URL input as the value
+  urlDatabase[generateRandomString()] = req.body.longURL;
 
   res.send("Ok"); // Respond with 'Ok' 
 });
@@ -62,6 +63,13 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
+
+
+
+
+
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
