@@ -44,25 +44,41 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newID}`);
 });
 
+// edit urls
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const newLongURL = req.body.longURL;
+  urlDatabase[id] = newLongURL;
+  res.redirect("/urls");
+})
+
+//delete urls
 app.post("/urls/:id/delete", (req, res) => {
   const {id} = req.params;
   delete urlDatabase[id];
   res.redirect("/urls");
 })
 
+//use short url to go to actual long urls
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
 
+//page to make new urls
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// page to show output of new url input
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
+
+
+
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
