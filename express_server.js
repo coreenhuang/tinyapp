@@ -41,15 +41,12 @@ function generateRandomString() {
 
 function getUserByEmail(newEmail) {
 
-  const putUserObjectsIntoArray = Object.values(users);
-
-  for (let i = 0; i < putUserObjectsIntoArray.length; i++) {
-
-    if (putUserObjectsIntoArray[i]["email"] === newEmail) {
-      return true;
-    }
+  for (const id in users) {
+   const user = users[id];
+   if (user.email === email) {
+    return user;
+   } 
   }
-  return false;
 }
 
 //index page of urls
@@ -61,12 +58,36 @@ app.get("/urls", (req, res) => {
 
 //adding to url list
 app.post("/urls", (req, res) => {
-
+  
   let newShortURLID = generateRandomString();
   // adds to database, generating random id for key, and adds the client's long URL input as the value
   urlDatabase[newShortURLID] = req.body.longURL;
-
+  
   res.redirect(`/urls/${newShortURLID}`);
+});
+
+//log in form
+app.get("/login", (req, res) => {
+  res.render("urls_login", {user: null});
+});
+
+//logging in
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const user = getUserByEmail(email);
+  if (!user || user.password !== password) {
+    return res.send("Login information does not match our recods!")
+  }
+
+  res.redirect('/urls');
+});
+
+//logging out
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/urls");
 });
 
 //page to registration page
@@ -86,9 +107,8 @@ app.post("/register", (req, res) => {
 
   if (!newUserEmail || !newUserPassword) {
     res.sendStatus(400);
-  } else if {
-
-  
+  } else if (getUserByEmail(newUserEmail)) {
+    res.sendStatus(400);
   } else {
     users[newUserID] = {
       id: newUserID,
@@ -116,18 +136,6 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-//logging in
-app.post("/login", (req, res) => {
-  const userID = req.cookies.user_id;
-  res.cookie("user_id", userID); 
-  res.redirect("/urls");
-});
-
-//logging out
-app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/urls");
-});
 
 // edit urls
 app.post("/urls/:id", (req, res) => {
