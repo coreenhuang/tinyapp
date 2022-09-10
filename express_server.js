@@ -12,12 +12,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "2323",
   },
 };
 
@@ -39,7 +39,7 @@ function generateRandomString() {
   return newID;
 }
 
-function getUserByEmail(newEmail) {
+function getUserByEmail(email) {
 
   for (const id in users) {
    const user = users[id];
@@ -47,6 +47,7 @@ function getUserByEmail(newEmail) {
     return user;
    } 
   }
+  return null;
 }
 
 //index page of urls
@@ -78,9 +79,9 @@ app.post("/login", (req, res) => {
 
   const user = getUserByEmail(email);
   if (!user || user.password !== password) {
-    return res.send("Login information does not match our recods!")
+    return res.sendStatus(403);
   }
-
+  res.cookie("user_id", user.id);
   res.redirect('/urls');
 });
 
@@ -97,7 +98,7 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-//registering username and password
+//registering email and password
 app.post("/register", (req, res) => {
 
   const newUserID = generateRandomString();
