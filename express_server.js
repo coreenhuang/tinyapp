@@ -9,21 +9,35 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 
 const users = {
-  userRandomID: {
-    id: "userRandomID",
+  aJ48lW: {
+    id: "aJ48lW",
     email: "user@example.com",
     password: "123",
   },
-  user2RandomID: {
-    id: "user2RandomID",
+  Ke34f9: {
+    id: "Ke34f9",
     email: "user2@example.com",
     password: "2323",
   },
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.amazon.ca",
+    userID: "aJ48lW",
+  },
+  n9aFxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "Ke34f9",
+  },
+  we9RWr: {
+    longURL: "https://www.lighthouselabs.ca",
+    userID: "Ke34f9"
+  },
 };
 
 function generateRandomString() {
@@ -50,26 +64,62 @@ function getUserByEmail(email) {
   return null;
 }
 
+function urlsForUser(userID) {
+
+  const urls = {};
+
+  const keys = Object.keys(urlDatabase);
+
+  for (const key of keys) {
+    const url = urlDatabase[key];
+    if (url.userID === userID) {
+      urls[key] = url;
+    }
+  }
+
+  return urls;
+}
+
 //index page of urls
 app.get("/urls", (req, res) => {
   const userID = req.cookies.user_id;
-  const templateVars = { urls: urlDatabase, user: users[userID]};
-  res.render("urls_index", templateVars);
+
+  if (userID) {
+    const templateVars = { urls: urlsForUser(userID), user: users[userID]};
+    res.render("urls_index", templateVars);
+  } else {
+    res.send('Please <a href="/login">login</a> to see your list of URLs.')
+  }
+
 });
 
 //adding to url list
 app.post("/urls", (req, res) => {
   
-  let newShortURLID = generateRandomString();
-  // adds to database, generating random id for key, and adds the client's long URL input as the value
-  urlDatabase[newShortURLID] = req.body.longURL;
-  
-  res.redirect(`/urls/${newShortURLID}`);
+  if (req.cookies.user_id) {
+
+    const newShortURLID = generateRandomString();
+      urlDatabase[newShortURLID] = {
+        longURL: req.body.longURL,
+        userID: req.cookies.user_id
+      }
+
+    res.redirect(`/urls/${newShortURLID}`);
+
+  } else {
+
+    res.send('You must log in first, before proceeding with this request.')
+  }
 });
 
 //log in form
 app.get("/login", (req, res) => {
-  res.render("urls_login", {user: null});
+
+  if (req.cookies.user_id) {
+    res.redirect('/urls');
+  } else {
+    res.render("urls_login", {user: null});
+  }
 });
 
 //logging in
@@ -95,7 +145,12 @@ app.post("/logout", (req, res) => {
 app.get("/register", (req, res) => {
   const userID = req.cookies.user_id;
   const templateVars = {user: users[userID]};
-  res.render("urls_register", templateVars);
+
+  if (req.cookies.user_id) {
+    res.redirect('/urls');
+  } else {
+    res.render("urls_register", templateVars);
+  }
 });
 
 //registering email and password
@@ -127,22 +182,26 @@ app.post("/register", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies.user_id;
   const templateVars = {user: users[userID]};
-  res.render("urls_new", templateVars);
+
+  if (userID) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect('/login')
+  }
 });
 
 // page to show output of new url input
 app.get("/urls/:id", (req, res) => {
   const userID = req.cookies.user_id;
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: users[userID]};
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[userID]};
   res.render("urls_show", templateVars);
 });
-
 
 // edit urls
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   const newLongURL = req.body.longURL;
-  urlDatabase[id] = newLongURL;
+  urlDatabase[id].longURL = newLongURL;
   res.redirect("/urls");
 });
 
@@ -155,8 +214,13 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //use short url to go to actual long urls
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+
+  if (urlDatabase[req.params.id]) {
+    const longURL = urlDatabase[req.params.id].longURL;
+    res.redirect(longURL);
+  } else {
+    res.send('This ID does not exist. Please try again.')
+  }
 });
 
 
