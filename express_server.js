@@ -2,6 +2,7 @@ const express = require("express");
 // const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+const {generateRandomString, getUserByEmail, urlsForUser} = require('./helpers')
 
 const app = express();
 // app.use(cookieParser());
@@ -9,6 +10,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }))
+
 const PORT = 8080; 
 
 app.set("view engine", "ejs");
@@ -46,52 +48,12 @@ const urlDatabase = {
   },
 };
 
-const generateRandomString = function() {
-
-  const charAndNum = ['ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'];
-
-  let newID = '';
-
-  for (let i = 0; i < 6; i++) {
-    newID += charAndNum[0][Math.floor(Math.random() * charAndNum[0].length)];
-  }
-
-  return newID;
-}
-
-const getUserByEmail = function(email, database) {
-
-  for (const id in database) {
-   const user = database[id];
-   if (user.email === email) {
-    return user;
-   } 
-  }
-  return null;
-}
-
-const urlsForUser = function(userID) {
-
-  const urls = {};
-
-  const keys = Object.keys(urlDatabase);
-
-  for (const key of keys) {
-    const url = urlDatabase[key];
-    if (url.userID === userID) {
-      urls[key] = url;
-    }
-  }
-
-  return urls;
-}
-
 //index page of urls
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
 
   if (userID) {
-    const templateVars = { urls: urlsForUser(userID), user: users[userID]};
+    const templateVars = { urls: urlsForUser(userID, urlDatabase), user: users[userID]};
     res.render("urls_index", templateVars);
   } else {
     res.send('Please <a href="/login">login</a> to see your list of URLs.')
@@ -215,7 +177,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const userID = req.session.user_id;
 
-  const userUrls = urlsForUser(userID);
+  const userUrls = urlsForUser(userID, urlDatabase);
 
   const userUrlsIds = Object.keys(userUrls);
 
@@ -243,7 +205,7 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const userID = req.session.user_id;
 
-  const userUrls = urlsForUser(userID);
+  const userUrls = urlsForUser(userID, urlDatabase);
 
   const userUrlsIds = Object.keys(userUrls);
 
@@ -270,7 +232,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const userID = req.session.user_id;
 
-  const userUrls = urlsForUser(userID);
+  const userUrls = urlsForUser(userID, urlDatabase);
 
   const userUrlsIds = Object.keys(userUrls);
 
@@ -302,11 +264,6 @@ app.get("/u/:id", (req, res) => {
     res.send('This ID does not exist. Please try again.')
   }
 });
-
-
-
-
-
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
