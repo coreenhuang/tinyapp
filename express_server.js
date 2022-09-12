@@ -1,9 +1,14 @@
 const express = require("express");
-const cookieParser = require('cookie-parser');
+// const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
 
 const app = express();
-app.use(cookieParser());
+// app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}))
 const PORT = 8080; 
 
 app.set("view engine", "ejs");
@@ -83,7 +88,7 @@ function urlsForUser(userID) {
 
 //index page of urls
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
 
   if (userID) {
     const templateVars = { urls: urlsForUser(userID), user: users[userID]};
@@ -97,12 +102,12 @@ app.get("/urls", (req, res) => {
 //adding to url list
 app.post("/urls", (req, res) => {
   
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
 
     const newShortURLID = generateRandomString();
       urlDatabase[newShortURLID] = {
         longURL: req.body.longURL,
-        userID: req.cookies.user_id
+        userID: req.session.user_id
       }
 
     res.redirect(`/urls/${newShortURLID}`);
@@ -116,7 +121,8 @@ app.post("/urls", (req, res) => {
 //log in form
 app.get("/login", (req, res) => {
 
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
+
     res.redirect('/urls');
   } else {
     res.render("urls_login", {user: null});
@@ -127,31 +133,41 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-
   const user = getUserByEmail(email);
-  const hashedPassword = user.password;
+   
+  if (!email || !password) {
+    res.send('Please fill out your login email and password.')
+  }
 
+  if (!user) {
+    res.send('You do not have an account with us.');
+  }
+  
+  const hashedPassword = user.password;
   const verifyPassword = bcrypt.compareSync(password, hashedPassword);
 
-  if (!user || !verifyPassword) {
-    return res.sendStatus(403);
+  if (!verifyPassword) {
+    res.send('Login information does not match. Please try again.');
   }
-  res.cookie("user_id", user.id);
+
+  req.session.user_id = user.id;
   res.redirect('/urls');
 });
 
 //logging out
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  // res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
 //page to registration page
 app.get("/register", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
+
   const templateVars = {user: users[userID]};
 
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     res.redirect('/urls');
   } else {
     res.render("urls_register", templateVars);
@@ -178,15 +194,14 @@ app.post("/register", (req, res) => {
       password: hashedPassword
     }
 
-    res.cookie("user_id", newUserID);
+    req.session.user_id = newUserID;
     res.redirect("/urls");
   }
-
 });
 
 //page to make new urls
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const templateVars = {user: users[userID]};
 
   if (userID) {
@@ -198,7 +213,7 @@ app.get("/urls/new", (req, res) => {
 
 // page to show output of new url input
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
 
   const userUrls = urlsForUser(userID);
 
@@ -226,7 +241,7 @@ app.get("/urls/:id", (req, res) => {
 
 // edit urls
 app.post("/urls/:id", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
 
   const userUrls = urlsForUser(userID);
 
@@ -253,7 +268,7 @@ app.post("/urls/:id", (req, res) => {
 
 //delete urls
 app.post("/urls/:id/delete", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
 
   const userUrls = urlsForUser(userID);
 
@@ -272,7 +287,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 
   if (userID && userUrlsIds.includes(req.params.id)) { 
-    delete userUrls[req.params.id];
+    delete urlDatabase[req.params.id];
     res.redirect("/urls");
   }
 });
