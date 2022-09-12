@@ -193,23 +193,82 @@ app.get("/urls/new", (req, res) => {
 // page to show output of new url input
 app.get("/urls/:id", (req, res) => {
   const userID = req.cookies.user_id;
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: users[userID]};
-  res.render("urls_show", templateVars);
+
+  const userUrls = urlsForUser(userID);
+
+  const userUrlsIds = Object.keys(userUrls);
+
+  if (!urlDatabase[req.params.id]) {
+    res.send('This URL ID does not exist.')
+  }
+
+  if (!userID) {
+    res.send('Please <a href="/login">login</a> to proceed.')
+  }
+
+  if (userID && !userUrlsIds.includes(req.params.id)) {
+    res.send('You did not create this URL.')
+  }
+
+  if (userID && userUrlsIds.includes(req.params.id)) { 
+
+    const templateVars = { id: req.params.id, longURL: userUrls[req.params.id].longURL, user: users[userID]};
+    res.render("urls_show", templateVars);
+
+  } 
 });
 
 // edit urls
 app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const newLongURL = req.body.longURL;
-  urlDatabase[id].longURL = newLongURL;
-  res.redirect("/urls");
+  const userID = req.cookies.user_id;
+
+  const userUrls = urlsForUser(userID);
+
+  const userUrlsIds = Object.keys(userUrls);
+
+  if (!urlDatabase[req.params.id]) {
+    res.send('This URL ID does not exist.')
+  }
+
+  if (!userID) {
+    res.send('Please <a href="/login">login</a> to proceed.')
+  }
+
+  if (userID && !userUrlsIds.includes(req.params.id)) {
+    res.send('You cannot modify this URL as you did not create it.')
+  }
+
+  if (userID && userUrlsIds.includes(req.params.id)) { 
+    const newLongURL = req.body.longURL;
+    userUrls[req.params.id].longURL = newLongURL;
+    res.redirect("/urls");
+  }
 });
 
 //delete urls
 app.post("/urls/:id/delete", (req, res) => {
-  const {id} = req.params;
-  delete urlDatabase[id];
-  res.redirect("/urls");
+  const userID = req.cookies.user_id;
+
+  const userUrls = urlsForUser(userID);
+
+  const userUrlsIds = Object.keys(userUrls);
+
+  if (!urlDatabase[req.params.id]) {
+    res.send('This URL ID does not exist.')
+  }
+
+  if (!userID) {
+    res.send('Please <a href="/login">login</a> to proceed.')
+  }
+
+  if (userID && !userUrlsIds.includes(req.params.id)) {
+    res.send('You cannot delete this URL as you did not create it.')
+  }
+
+  if (userID && userUrlsIds.includes(req.params.id)) { 
+    delete userUrls[req.params.id];
+    res.redirect("/urls");
+  }
 });
 
 //use short url to go to actual long urls
