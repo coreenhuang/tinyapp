@@ -46,7 +46,7 @@ const urlDatabase = {
   },
 };
 
-function generateRandomString() {
+const generateRandomString = function() {
 
   const charAndNum = ['ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890'];
 
@@ -59,10 +59,10 @@ function generateRandomString() {
   return newID;
 }
 
-function getUserByEmail(email) {
+const getUserByEmail = function(email, database) {
 
-  for (const id in users) {
-   const user = users[id];
+  for (const id in database) {
+   const user = database[id];
    if (user.email === email) {
     return user;
    } 
@@ -70,7 +70,7 @@ function getUserByEmail(email) {
   return null;
 }
 
-function urlsForUser(userID) {
+const urlsForUser = function(userID) {
 
   const urls = {};
 
@@ -133,7 +133,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
    
   if (!email || !password) {
     res.send('Please fill out your login email and password.')
@@ -185,7 +185,7 @@ app.post("/register", (req, res) => {
 
   if (!newUserEmail || !newUserPassword) {
     res.sendStatus(400);
-  } else if (getUserByEmail(newUserEmail)) {
+  } else if (getUserByEmail(newUserEmail, users)) {
     res.sendStatus(400);
   } else {
     users[newUserID] = {
